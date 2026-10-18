@@ -147,7 +147,15 @@
                 <!-- KOLOM KANAN (Lebar 7 dari 12 di Laptop) - Berisi Riwayat -->
                 <div class="lg:col-span-7">
                     <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 h-full">
-                        <h2 class="text-lg font-semibold mb-4 text-gray-700">Riwayat Pengeluaran</h2>
+                        
+                        <!-- PERUBAHAN: Menambahkan tombol Kosongkan Data sejajar dengan judul -->
+                        <div class="flex justify-between items-center mb-4">
+                            <h2 class="text-lg font-semibold text-gray-700">Riwayat Pengeluaran</h2>
+                            <button type="button" onclick="resetAllData()" class="bg-red-50 text-red-600 font-semibold px-3 py-1.5 rounded-lg text-xs hover:bg-red-100 transition border border-red-100 flex items-center">
+                                <i class="fa-solid fa-trash-can mr-1"></i> Kosongkan Data
+                            </button>
+                        </div>
+
                         <div class="overflow-x-auto">
                             <table class="w-full text-sm text-left whitespace-nowrap">
                                 <thead>
@@ -165,10 +173,6 @@
                         </div>
                     </div>
                 </div>
-
-            </div>
-        </main>
-    </div>
 
 
 

@@ -46,7 +46,7 @@ function doPost(e) {
       sheet.getRange(1, 1, 1, headers.length).setFontWeight("bold").setBackground("#10b981").setFontColor("white");
     }
     
-    // 1. LOGIKA HAPUS DATA
+    // 1. LOGIKA HAPUS DATA (SATUAN)
     if (data.action === 'delete') {
        sheet.deleteRow(data.row);
        return ContentService.createTextOutput(JSON.stringify({ status: 'success', message: 'Data dihapus!' })).setMimeType(ContentService.MimeType.JSON);
@@ -59,7 +59,16 @@ function doPost(e) {
        sheet.getRange(data.row, 5).setValue(data.keterangan);
        return ContentService.createTextOutput(JSON.stringify({ status: 'success', message: 'Data diperbarui!' })).setMimeType(ContentService.MimeType.JSON);
     }
-    // 3. LOGIKA TAMBAH DATA BARU
+    // 3. LOGIKA RESET SEMUA DATA (BARU)
+    else if (data.action === 'reset_all') {
+       const lastRow = sheet.getLastRow();
+       if (lastRow > 1) {
+         // Menghapus mulai dari baris ke-2 hingga baris terakhir (menyisakan header)
+         sheet.deleteRows(2, lastRow - 1);
+       }
+       return ContentService.createTextOutput(JSON.stringify({ status: 'success', message: 'Semua data berhasil dikosongkan!' })).setMimeType(ContentService.MimeType.JSON);
+    }
+    // 4. LOGIKA TAMBAH DATA BARU
     else {
       let fileUrl = '';
       if (data.gambarBase64 && data.namaFile) {

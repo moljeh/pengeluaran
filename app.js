@@ -1,4 +1,4 @@
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyfvGU-9dBbqkpmWQNfPRQdjtm72KXHpoBwiLo5bz_ZsLPemMveiXhU5ff5o8rWtY6i/exec';
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzN1kMWs-e1YqHeLvJhaM1iW82pULZJGF--ylVcrraO1Tla5ekjW8L9owVv4cL7QZxO/exec';
 
 let appData = []; 
 let totalSaldo = 0;
@@ -408,6 +408,44 @@ async function deleteData(row) {
             }
         } catch (error) {
             Swal.fire('Gagal Menghapus', error.message, 'error');
+        }
+    }
+}
+
+
+// Fungsi untuk MENGOSONGKAN SELURUH DATA dengan konfirmasi SweetAlert
+async function resetAllData() {
+    const result = await Swal.fire({
+        title: 'Kosongkan Semua Data?',
+        text: "PERINGATAN: Seluruh riwayat pengeluaran akan dihapus secara PERMANEN dari database dan saldo kembali menjadi 0. Anda yakin?",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#ef4444',
+        cancelButtonColor: '#9ca3af',
+        confirmButtonText: 'Ya, Kosongkan!',
+        cancelButtonText: 'Batal'
+    });
+
+    if (result.isConfirmed) {
+        Swal.fire({ title: 'Membersihkan Data...', allowOutsideClick: false, didOpen: () => { Swal.showLoading() } });
+        
+        try {
+            const response = await fetch(APPS_SCRIPT_URL, { 
+                method: 'POST', 
+                body: JSON.stringify({ action: 'reset_all' }) 
+            });
+            const resData = await response.json();
+            
+            if(resData.status === 'success') {
+                Swal.fire('Dikosongkan!', 'Semua data pengeluaran telah berhasil dihapus.', 'success');
+                // Tarik ulang data agar tabel kosong dan total saldo menjadi Rp 0
+                document.getElementById('totalPengeluaran').innerHTML = '<i class="fa-solid fa-spinner fa-spin text-xl"></i>';
+                fetchTotal(); 
+            } else {
+                throw new Error(resData.message);
+            }
+        } catch (error) {
+            Swal.fire('Gagal Mengosongkan', error.message, 'error');
         }
     }
 }
