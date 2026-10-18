@@ -280,7 +280,7 @@ function renderRiwayat() {
             </td>
             <td class="py-3 px-2 text-right font-medium">${formatRupiah(item.jumlah)}</td>
             <td class="py-3 pl-2 text-center flex justify-center gap-2">
-                <button onclick="editData(${item.row}, '${tglRaw}', '${item.kategori}', '${item.keterangan.replace(/'/g, "\\'")}', ${item.jumlah})" class="bg-blue-100 text-blue-600 p-2 rounded-lg hover:bg-blue-200 transition" title="Edit">
+              <button onclick="editData(${item.row}, '${tglRaw}', '${item.kategori.replace(/'/g, "\\'").replace(/"/g, '&quot;')}', '${item.keterangan.replace(/'/g, "\\'").replace(/"/g, '&quot;')}', ${item.jumlah})" class="bg-blue-100 text-blue-600 p-2 rounded-lg hover:bg-blue-200 transition" title="Edit">
                     <i class="fa-solid fa-pen-to-square"></i>
                 </button>
                 <button onclick="deleteData(${item.row})" class="bg-red-100 text-red-600 p-2 rounded-lg hover:bg-red-200 transition" title="Hapus">
