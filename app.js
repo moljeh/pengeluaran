@@ -1,4 +1,4 @@
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzN1kMWs-e1YqHeLvJhaM1iW82pULZJGF--ylVcrraO1Tla5ekjW8L9owVv4cL7QZxO/exec';
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzPqiAE9cWn03LRA4WPZdTZyG_IOjWusufKMSGySVMlzXxaLq9IUSrA02vGjLVbclde/exec';
 
 let appData = []; 
 let totalSaldo = 0;
@@ -247,31 +247,47 @@ function renderRiwayat() {
     const tbody = document.getElementById('riwayatBody');
     tbody.innerHTML = '';
     
+    // Loop dari belakang agar data terbaru tampil di atas
     for (let i = appData.length - 1; i >= 0; i--) {
         const item = appData[i];
         
-        let tglStr = item.tanggal;
+        // Tetap mengambil format tanggal asli (tglRaw) khusus untuk disuntikkan ke form Edit
         let tglRaw = '';
         try { 
             let d = new Date(item.tanggal);
             if (!isNaN(d.getTime())) { 
-                tglStr = d.toLocaleDateString('id-ID', {day: 'numeric', month: 'short'});
                 tglRaw = d.toISOString().split('T')[0]; 
             }
         } catch(e) {}
 
-        // PERBAIKAN: Memastikan kategori dan keterangan selalu dibaca sebagai String (Teks)
+        // Memastikan kategori dan keterangan dibaca sebagai string untuk mencegah error replace
         let safeKategori = String(item.kategori || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
         let safeKeterangan = String(item.keterangan || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+
+        // Membuat nomor urut otomatis (1 untuk data paling atas)
+        let nomorUrut = appData.length - i;
+
+        // BARU: Logika memunculkan tombol kecil "Nota" jika link nota tersedia di database
+        let notaHtml = '';
+        if (item.linkNota && item.linkNota.trim() !== '') {
+            notaHtml = `
+                <button onclick="lihatNota('${item.linkNota}')" class="ml-2 text-[10px] bg-emerald-50 text-emerald-600 px-1.5 py-0.5 rounded border border-emerald-200 hover:bg-emerald-100 transition inline-flex items-center gap-1 cursor-pointer" title="Lihat Foto Nota">
+                    <i class="fa-solid fa-image"></i> Nota
+                </button>
+            `;
+        }
 
         const tr = document.createElement('tr');
         tr.className = "border-b border-gray-50 hover:bg-gray-50"; 
         
         tr.innerHTML = `
-            <td class="py-3 pr-2 text-xs">${tglStr}</td>
+            <td class="py-3 pr-2 text-sm text-center text-gray-500 font-medium">${nomorUrut}</td>
             <td class="py-3 px-2">
                 <p class="font-semibold text-gray-800 truncate w-32 md:w-full">${item.keterangan}</p>
-                <p class="text-xs text-emerald-500">${item.kategori}</p>
+                <div class="flex items-center mt-0.5">
+                    <p class="text-xs text-emerald-500">${item.kategori}</p>
+                    ${notaHtml}
+                </div>
             </td>
             <td class="py-3 px-2 text-right font-medium">${formatRupiah(item.jumlah)}</td>
             <td class="py-3 pl-2 text-center flex justify-center gap-2">
@@ -286,6 +302,7 @@ function renderRiwayat() {
         tbody.appendChild(tr);
     }
 }
+
 
 // Fungsi memunculkan form edit dan mengirim pembaruan ke Database
 async function editData(row, tanggal, kategori, keterangan, jumlah) {
@@ -433,4 +450,35 @@ async function resetAllData() {
             Swal.fire('Gagal Mengosongkan', error.message, 'error');
         }
     }
+}
+
+// Fungsi baru untuk menampilkan gambar Nota menggunakan iframe Preview resmi Google
+function lihatNota(url) {
+    let previewUrl = url;
+    
+    // Trik membaca ID unik file Google Drive
+    const match = url.match(/[-\w]{25,}/);
+    if (match && match[0]) {
+        const fileId = match[0];
+        // Menggunakan jalur "/preview" yang diizinkan Google untuk disematkan (embed)
+        previewUrl = `https://drive.google.com/file/d/${fileId}/preview`;
+    }
+    
+    // Memunculkan popup dengan iframe
+    Swal.fire({
+        html: `
+            <div class="w-full h-[80vh] rounded-lg overflow-hidden relative bg-black">
+                <iframe src="${previewUrl}" class="w-full h-full border-none" allow="autoplay"></iframe>
+            </div>
+        `,
+        showConfirmButton: false,
+        showCloseButton: true,
+        background: 'transparent',
+        backdrop: 'rgba(0,0,0,0.9)', // Latar belakang hitam pekat
+        padding: 0, 
+        width: '90vw', // Lebar popup 90% dari layar
+        customClass: {
+            closeButton: 'text-white hover:text-red-500 focus:outline-none border-none text-3xl font-bold bg-black/50 rounded-full w-10 h-10 flex items-center justify-center -mt-2 -mr-2'
+        }
+    });
 }
