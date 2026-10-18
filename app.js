@@ -1,4 +1,4 @@
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxwuiFyvXz9wMo2-zB1yn9CNDq5dxxNQYikZXOsq4LIfbwJWxRl6WwWpVfSrYMZ8HhR/exec';
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxc81ZPYzfQi0ANpBIPwDM6wLiX0OEouU0ec1UR13gkXce55JHjWM5ztTxL9cwn0Jdn/exec';
 
 let appData = []; 
 let totalSaldo = 0;
@@ -81,6 +81,9 @@ async function fetchTotal() {
             totalSaldo = result.total;
             appData = result.data || []; 
             totalEl.innerText = formatRupiah(totalSaldo);
+            
+            // Panggil fungsi render riwayat ke layar
+            renderRiwayat();
         } else {
             totalEl.innerText = 'Rp 0';
         }
@@ -244,3 +247,128 @@ window.addEventListener('appinstalled', () => {
     deferredPrompt = null;
     console.log('PWA berhasil diinstal!');
 });
+
+// Fungsi menyuntikkan data ke tabel riwayat di layar utama
+function renderRiwayat() {
+    const tbody = document.getElementById('riwayatBody');
+    tbody.innerHTML = '';
+    
+    // Loop dari belakang agar data terbaru tampil di atas
+    for (let i = appData.length - 1; i >= 0; i--) {
+        const item = appData[i];
+        
+        // Format tanggal untuk tampilan
+        let tglStr = item.tanggal;
+        let tglRaw = '';
+        try { 
+            let d = new Date(item.tanggal);
+            if (!isNaN(d.getTime())) { 
+                tglStr = d.toLocaleDateString('id-ID', {day: 'numeric', month: 'short'});
+                tglRaw = d.toISOString().split('T')[0]; // Format YYYY-MM-DD untuk form edit
+            }
+        } catch(e) {}
+
+        const tr = document.createElement('tr');
+        tr.className = "border-b border-gray-50 hover:bg-gray-50"; 
+        
+        // Tombol Edit mengirimkan parameter (baris, tanggal, kategori, keterangan, jumlah)
+        tr.innerHTML = `
+            <td class="py-3 pr-2 text-xs">${tglStr}</td>
+            <td class="py-3 px-2">
+                <p class="font-semibold text-gray-800 truncate w-32">${item.keterangan}</p>
+                <p class="text-xs text-emerald-500">${item.kategori}</p>
+            </td>
+            <td class="py-3 px-2 text-right font-medium">${formatRupiah(item.jumlah)}</td>
+            <td class="py-3 pl-2 text-center">
+                <button onclick="editData(${item.row}, '${tglRaw}', '${item.kategori}', '${item.keterangan.replace(/'/g, "\\'")}', ${item.jumlah})" class="bg-blue-100 text-blue-600 p-2 rounded-lg hover:bg-blue-200 transition">
+                    <i class="fa-solid fa-pen-to-square"></i>
+                </button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    }
+}
+
+// Fungsi memunculkan form edit dan mengirim pembaruan ke Database
+async function editData(row, tanggal, kategori, keterangan, jumlah) {
+    // Format nominal awal agar saat popup dibuka, angkanya sudah bertitik
+    let formattedJumlah = parseInt(jumlah, 10).toLocaleString('id-ID');
+
+    const { value: formValues } = await Swal.fire({
+        title: 'Edit Pengeluaran',
+        html: `
+            <div class="text-left space-y-4 mt-2">
+                <div>
+                    <label class="block text-sm font-medium text-gray-600 mb-1">Tanggal</label>
+                    <input id="edit-tgl" type="date" class="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none" value="${tanggal}">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-600 mb-1">Kategori</label>
+                    <input id="edit-kat" type="text" class="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none" value="${kategori}">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-600 mb-1">Keterangan</label>
+                    <input id="edit-ket" type="text" class="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none" value="${keterangan}">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-600 mb-1">Jumlah (Rp)</label>
+                    <!-- Menggunakan type text dan inputmode numeric agar titik bisa dimunculkan -->
+                    <input id="edit-jml" type="text" inputmode="numeric" class="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none" value="${formattedJumlah}">
+                </div>
+            </div>
+        `,
+        focusConfirm: false,
+        showCancelButton: true,
+        confirmButtonColor: '#10b981',
+        cancelButtonColor: '#ef4444',
+        confirmButtonText: 'Simpan Perubahan',
+        cancelButtonText: 'Batal',
+        
+        // Menambahkan fungsi pendeteksi ketikan di dalam popup
+        didOpen: () => {
+            const editJml = document.getElementById('edit-jml');
+            editJml.addEventListener('input', function(e) {
+                // Hapus semua karakter selain angka
+                let rawValue = this.value.replace(/[^0-9]/g, '');
+                if (rawValue) {
+                    // Format kembali menjadi angka dengan titik
+                    this.value = parseInt(rawValue, 10).toLocaleString('id-ID');
+                } else {
+                    this.value = '';
+                }
+            });
+        },
+        
+        preConfirm: () => {
+            // Hilangkan titik sebelum dikirim ke database
+            let bersihJml = document.getElementById('edit-jml').value.replace(/[^0-9]/g, '');
+            return {
+                action: 'edit',
+                row: row,
+                tanggal: document.getElementById('edit-tgl').value,
+                kategori: document.getElementById('edit-kat').value,
+                keterangan: document.getElementById('edit-ket').value,
+                jumlah: bersihJml // Mengirim angka murni tanpa titik
+            }
+        }
+    });
+
+    if (formValues) {
+        Swal.fire({ title: 'Menyimpan...', allowOutsideClick: false, didOpen: () => { Swal.showLoading() } });
+        
+        try {
+            const response = await fetch(APPS_SCRIPT_URL, { method: 'POST', body: JSON.stringify(formValues) });
+            const result = await response.json();
+            
+            if(result.status === 'success') {
+                Swal.fire('Berhasil!', 'Data telah diperbarui.', 'success');
+                // Refresh data layar tanpa me-reload web
+                fetchTotal(); 
+            } else {
+                throw new Error(result.message);
+            }
+        } catch (error) {
+            Swal.fire('Gagal', error.message, 'error');
+        }
+    }
+}

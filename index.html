@@ -71,79 +71,105 @@
     </div>
 	
 	
-
-    <!-- Area Utama Aplikasi (KODE LAMA ANDA) -->
+<!-- Area Utama Aplikasi (Tidak akan ikut tercetak) -->
     <div class="no-print">
-        <header class="bg-emerald-500 text-white p-5 shadow-md rounded-b-3xl mb-6">
+        <header class="bg-emerald-500 text-white p-5 shadow-md rounded-b-3xl mb-6 lg:mb-8">
             <h1 class="text-2xl font-bold text-center"><i class="fa-solid fa-wallet mr-2"></i>PengeluaranKu</h1>
         </header>
 
-        <main class="container mx-auto px-4 max-w-md">
+        <!-- PERUBAHAN: max-w-md diubah jadi max-w-5xl agar lebar di laptop -->
+        <main class="container mx-auto px-4 max-w-5xl">
             
-            <div class="bg-gradient-to-r from-emerald-500 to-teal-600 rounded-2xl shadow-lg p-6 mb-6 text-white text-center relative">
-                <h2 class="text-sm font-medium text-emerald-100 mb-1">Total Pengeluaran</h2>
-                <div class="text-3xl font-bold tracking-wide mb-4" id="totalPengeluaran">
-                    <i class="fa-solid fa-spinner fa-spin text-xl"></i>
-                </div>
-                <!-- Tombol Cetak -->
-                <button type="button" id="btnCetak" class="bg-white text-emerald-600 font-semibold px-4 py-2 rounded-lg text-sm hover:bg-emerald-50 transition shadow">
-                    <i class="fa-solid fa-print mr-1"></i> Cetak Rekap
-                </button>
-            </div>
+            <!-- PERUBAHAN: Gunakan Grid (1 kolom di HP, 2 kolom di Desktop) -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                
+                <!-- KOLOM KIRI (Lebar 5 dari 12 di Laptop) - Berisi Total & Form -->
+                <div class="lg:col-span-5 space-y-6">
+                    
+                    <!-- KOTAK TOTAL -->
+                    <div class="bg-gradient-to-r from-emerald-500 to-teal-600 rounded-2xl shadow-lg p-6 text-white text-center relative">
+                        <h2 class="text-sm font-medium text-emerald-100 mb-1">Total Pengeluaran</h2>
+                        <div class="text-3xl font-bold tracking-wide mb-4" id="totalPengeluaran">
+                            <i class="fa-solid fa-spinner fa-spin text-xl"></i>
+                        </div>
+                        <button type="button" id="btnCetak" class="bg-white text-emerald-600 font-semibold px-4 py-2 rounded-lg text-sm hover:bg-emerald-50 transition shadow">
+                            <i class="fa-solid fa-print mr-1"></i> Cetak Rekap
+                        </button>
+                    </div>
 
-            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                <!-- FORM ANDA TETAP SAMA SEPERTI SEBELUMNYA -->
-                <h2 class="text-lg font-semibold mb-4 text-gray-700">Tambah Pengeluaran</h2>
-                <form id="expenseForm" class="space-y-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-600 mb-1">Tanggal</label>
-                        <input type="date" id="tanggal" required class="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none">
-                    </div>
-                   <div>
-                    <label class="block text-sm font-medium text-gray-600 mb-1">Kategori</label>
-                    <select id="kategori" required class="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-white mb-2">
-                        <option value="Makanan">Makanan & Minuman</option>
-                        <option value="Transportasi">Transportasi</option>
-                        <option value="Belanja">Belanja</option>
-                        <option value="Tagihan">Tagihan & Utilitas</option>
-                        <option value="Lainnya">Lainnya</option>
-                    </select>
-                    <!-- Kolom input manual, tersembunyi secara default -->
-                    <input type="text" id="kategoriManual" placeholder="Tulis kategori baru..." class="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none hidden">
-                </div>
-                   <div>
-                    <label class="block text-sm font-medium text-gray-600 mb-1">Jumlah (Rp)</label>
-                    <!-- Ubah type menjadi text, tambahkan inputmode="numeric" -->
-                    <input type="text" inputmode="numeric" id="jumlah" placeholder="Contoh: 50.000" required class="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none">
-                </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-600 mb-1">Keterangan</label>
-                        <input type="text" id="keterangan" placeholder="Beli makan siang..." required class="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none">
-                    </div>
-            <div>
-                        <label class="block text-sm font-medium text-gray-600 mb-1">Unggah Nota (Opsional)</label>
-                        <!-- Kotak unggah dibuat lebih tinggi dengan h-48 dan overflow-hidden -->
-                        <div class="relative border-2 border-dashed border-gray-300 rounded-xl h-48 text-center hover:bg-gray-50 transition overflow-hidden flex items-center justify-center bg-gray-50 group">
-                            
-                            <!-- Input File (Transparan menutupi seluruh kotak) -->
-                            <input type="file" id="gambar" accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20">
-                            
-                            <!-- Tampilan Awal (Ikon Awan) -->
-                            <div id="uploadPlaceholder" class="text-gray-500 z-10 transition-opacity duration-300">
-                                <i class="fa-solid fa-cloud-arrow-up text-4xl mb-2 text-emerald-400 group-hover:scale-110 transition-transform"></i>
-                                <p class="text-sm font-medium text-gray-600" id="fileName">Ketuk untuk pilih gambar</p>
+                    <!-- KOTAK FORM -->
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                        <h2 class="text-lg font-semibold mb-4 text-gray-700">Tambah Pengeluaran</h2>
+                        <form id="expenseForm" class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-600 mb-1">Tanggal</label>
+                                <input type="date" id="tanggal" required class="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none">
                             </div>
+                           <div>
+                                <label class="block text-sm font-medium text-gray-600 mb-1">Kategori</label>
+                                <select id="kategori" required class="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-white mb-2">
+                                    <option value="Makanan">Makanan & Minuman</option>
+                                    <option value="Transportasi">Transportasi</option>
+                                    <option value="Belanja">Belanja</option>
+                                    <option value="Tagihan">Tagihan & Utilitas</option>
+                                    <option value="Lainnya">Lainnya</option>
+                                </select>
+                                <input type="text" id="kategoriManual" placeholder="Tulis kategori baru..." class="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none hidden">
+                            </div>
+                           <div>
+                                <label class="block text-sm font-medium text-gray-600 mb-1">Jumlah (Rp)</label>
+                                <input type="text" inputmode="numeric" id="jumlah" placeholder="Contoh: 50.000" required class="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-600 mb-1">Keterangan</label>
+                                <input type="text" id="keterangan" placeholder="Beli makan siang..." required class="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-600 mb-1">Unggah Nota (Opsional)</label>
+                                <div class="relative border-2 border-dashed border-gray-300 rounded-xl h-48 text-center hover:bg-gray-50 transition overflow-hidden flex items-center justify-center bg-gray-50 group">
+                                    <input type="file" id="gambar" accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20">
+                                    <div id="uploadPlaceholder" class="text-gray-500 z-10 transition-opacity duration-300">
+                                        <i class="fa-solid fa-cloud-arrow-up text-4xl mb-2 text-emerald-400 group-hover:scale-110 transition-transform"></i>
+                                        <p class="text-sm font-medium text-gray-600" id="fileName">Ketuk untuk pilih gambar</p>
+                                    </div>
+                                    <img id="imagePreview" src="" class="absolute inset-0 w-full h-full object-cover hidden z-10 pointer-events-none" alt="Preview Nota">
+                                </div>
+                            </div>
+                            <button type="submit" id="submitBtn" class="w-full bg-emerald-500 text-white font-bold py-3 px-4 rounded-xl hover:bg-emerald-600 transition shadow-lg shadow-emerald-200 mt-4 flex justify-center items-center">
+                                <i class="fa-solid fa-paper-plane mr-2"></i> Simpan Data
+                            </button>
+                        </form>
+                    </div>
 
-                            <!-- Tampilan Preview Gambar (Awalnya Tersembunyi) -->
-                            <img id="imagePreview" src="" class="absolute inset-0 w-full h-full object-cover hidden z-10 pointer-events-none" alt="Preview Nota">
+                </div>
+
+                <!-- KOLOM KANAN (Lebar 7 dari 12 di Laptop) - Berisi Riwayat -->
+                <div class="lg:col-span-7">
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 h-full">
+                        <h2 class="text-lg font-semibold mb-4 text-gray-700">Riwayat Pengeluaran</h2>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-sm text-left whitespace-nowrap">
+                                <thead>
+                                    <tr class="border-b-2 border-gray-100 text-gray-500">
+                                        <th class="py-2 pr-2">Tgl</th>
+                                        <th class="py-2 px-2">Keterangan</th>
+                                        <th class="py-2 px-2 text-right">Jumlah</th>
+                                        <th class="py-2 pl-2 text-center">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="riwayatBody" class="text-gray-700">
+                                    <!-- Disuntikkan via JS -->
+                                </tbody>
+                            </table>
                         </div>
                     </div>
-                    <button type="submit" id="submitBtn" class="w-full bg-emerald-500 text-white font-bold py-3 px-4 rounded-xl hover:bg-emerald-600 transition shadow-lg shadow-emerald-200 mt-4 flex justify-center items-center">
-                        <i class="fa-solid fa-paper-plane mr-2"></i> Simpan Data
-                    </button>
-                </form>
+                </div>
+
             </div>
         </main>
+    </div>
+
+
     </div>
 
 <!-- Area Khusus Cetak Laporan -->
