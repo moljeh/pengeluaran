@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PengeluaranKu - Catatan Keuangan</title>
+    
+    <!-- Meta Theme & Manifest PWA -->
+    <meta name="theme-color" content="#10b981">
+    <link rel="manifest" href="manifest.json">
+    
+    <!-- Favicon (Ikon di tab browser) -->
+    <link rel="icon" type="image/png" href="asset/logo.png">
+    
+    <!-- Ikon PWA untuk perangkat Apple (iOS/iPhone) -->
+    <link rel="apple-touch-icon" href="asset/logo.png">
+    
+    <!-- Open Graph Meta Tags (Untuk Preview WhatsApp / Sosmed) -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="PengeluaranKu - Catat Keuanganmu">
+    <meta property="og:description" content="Aplikasi pencatat pengeluaran harian yang praktis. Dilengkapi fitur unggah foto nota dan cetak rekap otomatis!">
+    <meta property="og:image" content="asset/logo.png">
+    <!-- Ganti link di bawah ini dengan link URL Github Pages/Hosting Anda -->
+    <meta property="og:url" content="https://moljeh.github.io/pengeluaran/asset/logo.png"> 
+    <meta property="og:site_name" content="PengeluaranKu App">
+
+    <!-- Script & Style CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <style>
+        /* Pengaturan khusus saat dicetak ke PDF/Kertas */
+        @media print {
+            .no-print { display: none !important; }
+            .print-only { display: block !important; }
+            body, html { background: white !important; padding: 0; margin: 0; }
+            table, thead, tbody, tfoot, tr, th, td { 
+                background-color: transparent !important; 
+            }
+        }
+    </style>
+</head>
+
+
+<body class="bg-gray-100 text-gray-800 font-sans antialiased min-h-screen pb-28">
+
+
+
+<!-- BARU: Banner Install PWA (Nempel penuh di ujung bawah layar) -->
+    <div id="pwaBanner" class="hidden no-print fixed bottom-0 left-0 right-0 w-full bg-slate-800 text-white shadow-[0_-5px_15px_rgba(0,0,0,0.15)] z-[100] border-t border-slate-700">
+        <div class="max-w-md mx-auto flex justify-between items-center p-4">
+            <div class="flex items-center overflow-hidden">
+                <img src="asset/logo.png" alt="Logo PWA" class="w-10 h-10 mr-3 rounded-lg shadow-sm bg-white p-0.5 object-cover shrink-0">
+                <div class="truncate mr-2">
+                    <p class="font-bold text-sm truncate">PengeluaranKu</p>
+                    <p class="text-xs text-slate-300 truncate">Instal di HP untuk akses lebih cepat</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-3 shrink-0">
+                <button id="btnInstall" class="bg-emerald-500 hover:bg-emerald-400 text-white font-bold py-1.5 px-4 rounded-full text-xs shadow-md transition">Instal</button>
+                <button id="btnCloseBanner" class="text-slate-400 hover:text-white transition p-1">
+                    <i class="fa-solid fa-xmark text-xl"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+	
+	
+
+    <!-- Area Utama Aplikasi (KODE LAMA ANDA) -->
+    <div class="no-print">
+        <header class="bg-emerald-500 text-white p-5 shadow-md rounded-b-3xl mb-6">
+            <h1 class="text-2xl font-bold text-center"><i class="fa-solid fa-wallet mr-2"></i>PengeluaranKu</h1>
+        </header>
+
+        <main class="container mx-auto px-4 max-w-md">
+            
+            <div class="bg-gradient-to-r from-emerald-500 to-teal-600 rounded-2xl shadow-lg p-6 mb-6 text-white text-center relative">
+                <h2 class="text-sm font-medium text-emerald-100 mb-1">Total Pengeluaran</h2>
+                <div class="text-3xl font-bold tracking-wide mb-4" id="totalPengeluaran">
+                    <i class="fa-solid fa-spinner fa-spin text-xl"></i>
+                </div>
+                <!-- Tombol Cetak -->
+                <button type="button" id="btnCetak" class="bg-white text-emerald-600 font-semibold px-4 py-2 rounded-lg text-sm hover:bg-emerald-50 transition shadow">
+                    <i class="fa-solid fa-print mr-1"></i> Cetak Rekap
+                </button>
+            </div>
+
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                <!-- FORM ANDA TETAP SAMA SEPERTI SEBELUMNYA -->
+                <h2 class="text-lg font-semibold mb-4 text-gray-700">Tambah Pengeluaran</h2>
+                <form id="expenseForm" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-600 mb-1">Tanggal</label>
+                        <input type="date" id="tanggal" required class="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                    </div>
+                   <div>
+                    <label class="block text-sm font-medium text-gray-600 mb-1">Kategori</label>
+                    <select id="kategori" required class="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-white mb-2">
+                        <option value="Makanan">Makanan & Minuman</option>
+                        <option value="Transportasi">Transportasi</option>
+                        <option value="Belanja">Belanja</option>
+                        <option value="Tagihan">Tagihan & Utilitas</option>
+                        <option value="Lainnya">Lainnya</option>
+                    </select>
+                    <!-- Kolom input manual, tersembunyi secara default -->
+                    <input type="text" id="kategoriManual" placeholder="Tulis kategori baru..." class="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none hidden">
+                </div>
+                   <div>
+                    <label class="block text-sm font-medium text-gray-600 mb-1">Jumlah (Rp)</label>
+                    <!-- Ubah type menjadi text, tambahkan inputmode="numeric" -->
+                    <input type="text" inputmode="numeric" id="jumlah" placeholder="Contoh: 50.000" required class="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-600 mb-1">Keterangan</label>
+                        <input type="text" id="keterangan" placeholder="Beli makan siang..." required class="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                    </div>
+            <div>
+                        <label class="block text-sm font-medium text-gray-600 mb-1">Unggah Nota (Opsional)</label>
+                        <!-- Kotak unggah dibuat lebih tinggi dengan h-48 dan overflow-hidden -->
+                        <div class="relative border-2 border-dashed border-gray-300 rounded-xl h-48 text-center hover:bg-gray-50 transition overflow-hidden flex items-center justify-center bg-gray-50 group">
+                            
+                            <!-- Input File (Transparan menutupi seluruh kotak) -->
+                            <input type="file" id="gambar" accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20">
+                            
+                            <!-- Tampilan Awal (Ikon Awan) -->
+                            <div id="uploadPlaceholder" class="text-gray-500 z-10 transition-opacity duration-300">
+                                <i class="fa-solid fa-cloud-arrow-up text-4xl mb-2 text-emerald-400 group-hover:scale-110 transition-transform"></i>
+                                <p class="text-sm font-medium text-gray-600" id="fileName">Ketuk untuk pilih gambar</p>
+                            </div>
+
+                            <!-- Tampilan Preview Gambar (Awalnya Tersembunyi) -->
+                            <img id="imagePreview" src="" class="absolute inset-0 w-full h-full object-cover hidden z-10 pointer-events-none" alt="Preview Nota">
+                        </div>
+                    </div>
+                    <button type="submit" id="submitBtn" class="w-full bg-emerald-500 text-white font-bold py-3 px-4 rounded-xl hover:bg-emerald-600 transition shadow-lg shadow-emerald-200 mt-4 flex justify-center items-center">
+                        <i class="fa-solid fa-paper-plane mr-2"></i> Simpan Data
+                    </button>
+                </form>
+            </div>
+        </main>
+    </div>
+
+<!-- Area Khusus Cetak Laporan -->
+    <div id="printArea" class="hidden print-only p-8 text-gray-800 bg-white w-full h-full font-sans">
+        
+        <!-- Kop Laporan Modern -->
+        <div class="border-b-2 border-emerald-500 pb-4 mb-6">
+            <h1 class="text-3xl font-bold text-gray-900 uppercase tracking-wider">Rekapitulasi Pengeluaran</h1>
+            <p class="text-gray-500 mt-1" id="printDate"></p>
+        </div>
+        
+        <!-- Tabel Modern -->
+        <table class="w-full text-sm text-left border-collapse">
+            <thead>
+                <tr class="border-b-2 border-gray-800 text-gray-600 uppercase text-xs tracking-wider">
+                    <th class="py-3 px-2 text-center w-12">No</th>
+                    <th class="py-3 px-2">Tanggal</th>
+                    <th class="py-3 px-2">Kategori</th>
+                    <th class="py-3 px-2">Keterangan</th>
+                    <th class="py-3 px-2 text-right">Jumlah</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody" class="text-gray-700">
+                <!-- Baris tabel disuntikkan via JS -->
+            </tbody>
+            <tfoot>
+                <tr class="border-t-2 border-gray-800 text-gray-900 font-bold">
+                    <td colspan="4" class="py-4 px-2 text-right tracking-widest">TOTAL KESELURUHAN</td>
+                    <td class="py-4 px-2 text-right text-lg" id="tableTotal"></td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

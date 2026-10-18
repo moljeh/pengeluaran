@@ -1,0 +1,107 @@
+const FOLDER_NAME = 'Nota Pengeluaran App'; 
+// Pastikan nama ini sesuai dengan tab di bawah. Jika 'Lembar1', ganti jadi 'Lembar1'
+const SHEET_NAME = 'Sheet1'; 
+
+// Fungsi untuk mengecek dan membuat Folder
+function getOrCreateFolder(folderName) {
+  const folders = DriveApp.getFoldersByName(folderName);
+  if (folders.hasNext()) {
+    return folders.next(); 
+  } else {
+    return DriveApp.createFolder(folderName); 
+  }
+}
+
+// Ganti bagian fungsi doGet saja
+function doGet(e) {
+  try {
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
+    
+    let total = 0;
+    let records = [];
+    
+    if (sheet && sheet.getLastRow() > 1) {
+      const data = sheet.getDataRange().getValues();
+      
+      for (let i = 1; i < data.length; i++) {
+        let jumlah = parseFloat(data[i][3]); 
+        if (!isNaN(jumlah)) {
+          total += jumlah;
+        }
+        
+        // Simpan setiap baris ke dalam array records
+        records.push({
+          tanggal: data[i][1] || '-',
+          kategori: data[i][2] || '-',
+          jumlah: jumlah || 0,
+          keterangan: data[i][4] || '-'
+        });
+      }
+    }
+    
+    // Kembalikan total DAN records
+    return ContentService.createTextOutput(JSON.stringify({ 
+      status: 'success', 
+      total: total, 
+      data: records 
+    })).setMimeType(ContentService.MimeType.JSON);
+    
+  } catch (error) {
+    return ContentService.createTextOutput(JSON.stringify({ status: 'error', message: error.toString() }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+// Fungsi untuk MENYIMPAN pengeluaran baru
+function doPost(e) {
+  try {
+    const data = JSON.parse(e.postData.contents);
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    let sheet = ss.getSheetByName(SHEET_NAME);
+    
+    // OTOMATISASI 1: Jika tab sheet belum ada, buatkan otomatis
+    if (!sheet) {
+      sheet = ss.insertSheet(SHEET_NAME);
+    }
+    
+    // OTOMATISASI 2: Jika sheet masih kosong melompong, buatkan Header otomatis
+    if (sheet.getLastRow() === 0) {
+      const headers = ["Waktu Timestamp", "Tanggal", "Kategori", "Jumlah (Rp)", "Keterangan", "Link Nota"];
+      sheet.appendRow(headers);
+      
+      // Bikin header jadi cantik (Tebal, background hijau, font putih)
+      sheet.getRange(1, 1, 1, headers.length).setFontWeight("bold").setBackground("#10b981").setFontColor("white");
+    }
+    
+    let fileUrl = '';
+    
+    // Proses gambar jika ada
+    if (data.gambarBase64 && data.namaFile) {
+      const targetFolder = getOrCreateFolder(FOLDER_NAME);
+      const contentType = data.gambarBase64.substring(5, data.gambarBase64.indexOf(';'));
+      const bytes = Utilities.base64Decode(data.gambarBase64.split(',')[1]);
+      const blob = Utilities.newBlob(bytes, contentType, data.namaFile);
+      
+      const file = targetFolder.createFile(blob);
+      file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+      fileUrl = file.getUrl();
+    }
+    
+    // Tambahkan data pengeluaran di baris berikutnya
+    sheet.appendRow([
+      new Date(), 
+      data.tanggal, 
+      data.kategori, 
+      data.jumlah, 
+      data.keterangan, 
+      fileUrl
+    ]);
+    
+    return ContentService.createTextOutput(JSON.stringify({ status: 'success', message: 'Data berhasil disimpan!' }))
+      .setMimeType(ContentService.MimeType.JSON);
+      
+  } catch (error) {
+    return ContentService.createTextOutput(JSON.stringify({ status: 'error', message: error.toString() }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}
