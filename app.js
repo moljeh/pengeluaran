@@ -1,4 +1,4 @@
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxc81ZPYzfQi0ANpBIPwDM6wLiX0OEouU0ec1UR13gkXce55JHjWM5ztTxL9cwn0Jdn/exec';
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyfvGU-9dBbqkpmWQNfPRQdjtm72KXHpoBwiLo5bz_ZsLPemMveiXhU5ff5o8rWtY6i/exec';
 
 let appData = []; 
 let totalSaldo = 0;
@@ -271,17 +271,20 @@ function renderRiwayat() {
         const tr = document.createElement('tr');
         tr.className = "border-b border-gray-50 hover:bg-gray-50"; 
         
-        // Tombol Edit mengirimkan parameter (baris, tanggal, kategori, keterangan, jumlah)
+// Tombol Edit & Hapus diletakkan bersebelahan menggunakan flex
         tr.innerHTML = `
             <td class="py-3 pr-2 text-xs">${tglStr}</td>
             <td class="py-3 px-2">
-                <p class="font-semibold text-gray-800 truncate w-32">${item.keterangan}</p>
+                <p class="font-semibold text-gray-800 truncate w-32 md:w-full">${item.keterangan}</p>
                 <p class="text-xs text-emerald-500">${item.kategori}</p>
             </td>
             <td class="py-3 px-2 text-right font-medium">${formatRupiah(item.jumlah)}</td>
-            <td class="py-3 pl-2 text-center">
-                <button onclick="editData(${item.row}, '${tglRaw}', '${item.kategori}', '${item.keterangan.replace(/'/g, "\\'")}', ${item.jumlah})" class="bg-blue-100 text-blue-600 p-2 rounded-lg hover:bg-blue-200 transition">
+            <td class="py-3 pl-2 text-center flex justify-center gap-2">
+                <button onclick="editData(${item.row}, '${tglRaw}', '${item.kategori}', '${item.keterangan.replace(/'/g, "\\'")}', ${item.jumlah})" class="bg-blue-100 text-blue-600 p-2 rounded-lg hover:bg-blue-200 transition" title="Edit">
                     <i class="fa-solid fa-pen-to-square"></i>
+                </button>
+                <button onclick="deleteData(${item.row})" class="bg-red-100 text-red-600 p-2 rounded-lg hover:bg-red-200 transition" title="Hapus">
+                    <i class="fa-solid fa-trash"></i>
                 </button>
             </td>
         `;
@@ -369,6 +372,42 @@ async function editData(row, tanggal, kategori, keterangan, jumlah) {
             }
         } catch (error) {
             Swal.fire('Gagal', error.message, 'error');
+        }
+    }
+}
+
+// Fungsi untuk menghapus data dengan konfirmasi SweetAlert
+async function deleteData(row) {
+    const result = await Swal.fire({
+        title: 'Hapus Data?',
+        text: "Data pengeluaran ini akan dihapus permanen dari Database!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#ef4444',
+        cancelButtonColor: '#9ca3af',
+        confirmButtonText: 'Ya, Hapus!',
+        cancelButtonText: 'Batal'
+    });
+
+    if (result.isConfirmed) {
+        Swal.fire({ title: 'Menghapus...', allowOutsideClick: false, didOpen: () => { Swal.showLoading() } });
+        
+        try {
+            const response = await fetch(APPS_SCRIPT_URL, { 
+                method: 'POST', 
+                body: JSON.stringify({ action: 'delete', row: row }) 
+            });
+            const resData = await response.json();
+            
+            if(resData.status === 'success') {
+                Swal.fire('Terhapus!', 'Data pengeluaran berhasil dihapus.', 'success');
+                // Tarik ulang data agar tabel dan total saldo langsung ter-update
+                fetchTotal(); 
+            } else {
+                throw new Error(resData.message);
+            }
+        } catch (error) {
+            Swal.fire('Gagal Menghapus', error.message, 'error');
         }
     }
 }

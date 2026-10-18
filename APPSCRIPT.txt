@@ -15,13 +15,11 @@ function doGet(e) {
     
     if (sheet && sheet.getLastRow() > 1) {
       const data = sheet.getDataRange().getValues();
-      
       for (let i = 1; i < data.length; i++) {
         let jumlah = parseFloat(data[i][3]); 
         if (!isNaN(jumlah)) { total += jumlah; }
-        
         records.push({
-          row: i + 1, // Menyimpan nomor baris (index + 1)
+          row: i + 1,
           tanggal: data[i][1] || '-',
           kategori: data[i][2] || '-',
           jumlah: jumlah || 0,
@@ -29,16 +27,9 @@ function doGet(e) {
         });
       }
     }
-    
-    return ContentService.createTextOutput(JSON.stringify({ 
-      status: 'success', 
-      total: total, 
-      data: records 
-    })).setMimeType(ContentService.MimeType.JSON);
-    
+    return ContentService.createTextOutput(JSON.stringify({ status: 'success', total: total, data: records })).setMimeType(ContentService.MimeType.JSON);
   } catch (error) {
-    return ContentService.createTextOutput(JSON.stringify({ status: 'error', message: error.toString() }))
-      .setMimeType(ContentService.MimeType.JSON);
+    return ContentService.createTextOutput(JSON.stringify({ status: 'error', message: error.toString() })).setMimeType(ContentService.MimeType.JSON);
   }
 }
 
@@ -55,36 +46,36 @@ function doPost(e) {
       sheet.getRange(1, 1, 1, headers.length).setFontWeight("bold").setBackground("#10b981").setFontColor("white");
     }
     
-    // LOGIKA EDIT DATA
-    if (data.action === 'edit') {
-       // Menimpa sel data lama dengan inputan baru berdasarkan nomor baris
+    // 1. LOGIKA HAPUS DATA
+    if (data.action === 'delete') {
+       sheet.deleteRow(data.row);
+       return ContentService.createTextOutput(JSON.stringify({ status: 'success', message: 'Data dihapus!' })).setMimeType(ContentService.MimeType.JSON);
+    }
+    // 2. LOGIKA EDIT DATA
+    else if (data.action === 'edit') {
        sheet.getRange(data.row, 2).setValue(data.tanggal);
        sheet.getRange(data.row, 3).setValue(data.kategori);
        sheet.getRange(data.row, 4).setValue(data.jumlah);
        sheet.getRange(data.row, 5).setValue(data.keterangan);
-       return ContentService.createTextOutput(JSON.stringify({ status: 'success', message: 'Data diperbarui!' }))
-        .setMimeType(ContentService.MimeType.JSON);
+       return ContentService.createTextOutput(JSON.stringify({ status: 'success', message: 'Data diperbarui!' })).setMimeType(ContentService.MimeType.JSON);
     }
-    
-    // LOGIKA TAMBAH DATA BARU (Sama seperti sebelumnya)
-    let fileUrl = '';
-    if (data.gambarBase64 && data.namaFile) {
-      const targetFolder = getOrCreateFolder(FOLDER_NAME);
-      const contentType = data.gambarBase64.substring(5, data.gambarBase64.indexOf(';'));
-      const bytes = Utilities.base64Decode(data.gambarBase64.split(',')[1]);
-      const blob = Utilities.newBlob(bytes, contentType, data.namaFile);
-      const file = targetFolder.createFile(blob);
-      file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
-      fileUrl = file.getUrl();
+    // 3. LOGIKA TAMBAH DATA BARU
+    else {
+      let fileUrl = '';
+      if (data.gambarBase64 && data.namaFile) {
+        const targetFolder = getOrCreateFolder(FOLDER_NAME);
+        const contentType = data.gambarBase64.substring(5, data.gambarBase64.indexOf(';'));
+        const bytes = Utilities.base64Decode(data.gambarBase64.split(',')[1]);
+        const blob = Utilities.newBlob(bytes, contentType, data.namaFile);
+        const file = targetFolder.createFile(blob);
+        file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+        fileUrl = file.getUrl();
+      }
+      sheet.appendRow([new Date(), data.tanggal, data.kategori, data.jumlah, data.keterangan, fileUrl]);
+      return ContentService.createTextOutput(JSON.stringify({ status: 'success', message: 'Data berhasil disimpan!' })).setMimeType(ContentService.MimeType.JSON);
     }
-    
-    sheet.appendRow([new Date(), data.tanggal, data.kategori, data.jumlah, data.keterangan, fileUrl]);
-    
-    return ContentService.createTextOutput(JSON.stringify({ status: 'success', message: 'Data berhasil disimpan!' }))
-      .setMimeType(ContentService.MimeType.JSON);
       
   } catch (error) {
-    return ContentService.createTextOutput(JSON.stringify({ status: 'error', message: error.toString() }))
-      .setMimeType(ContentService.MimeType.JSON);
+    return ContentService.createTextOutput(JSON.stringify({ status: 'error', message: error.toString() })).setMimeType(ContentService.MimeType.JSON);
   }
 }
