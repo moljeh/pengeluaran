@@ -19,13 +19,8 @@
     <meta property="og:type" content="website">
     <meta property="og:title" content="PengeluaranKu - Catat Keuanganmu">
     <meta property="og:description" content="Aplikasi pencatat pengeluaran harian yang praktis. Dilengkapi fitur unggah foto nota dan cetak rekap otomatis!">
-    
-    <!-- PERBAIKAN 1: og:image WAJIB menggunakan URL lengkap (Absolut) -->
     <meta property="og:image" content="https://moljeh.github.io/pengeluaran/asset/logo.png">
-    
-    <!-- PERBAIKAN 2: og:url diisi dengan link halaman website Anda, BUKAN link gambar -->
     <meta property="og:url" content="https://moljeh.github.io/pengeluaran/"> 
-    
     <meta property="og:site_name" content="PengeluaranKu App">
 
     <!-- Script & Style CSS -->
@@ -33,25 +28,11 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     
-    <style>
-        /* Pengaturan khusus saat dicetak ke PDF/Kertas */
-        @media print {
-            .no-print { display: none !important; }
-            .print-only { display: block !important; }
-            body, html { background: white !important; padding: 0; margin: 0; }
-            table, thead, tbody, tfoot, tr, th, td { 
-                background-color: transparent !important; 
-            }
-        }
-    </style>
 </head>
 
+<body class="bg-gray-100 print:bg-white text-gray-800 font-sans antialiased min-h-screen pb-28 print:pb-0">
 
-<body class="bg-gray-100 text-gray-800 font-sans antialiased min-h-screen pb-28">
-
-
-
-<!-- BARU: Banner Install PWA (Nempel penuh di ujung bawah layar) -->
+<!-- Banner Install PWA (Nempel penuh di ujung bawah layar) -->
     <div id="pwaBanner" class="hidden no-print fixed bottom-0 left-0 right-0 w-full bg-slate-800 text-white shadow-[0_-5px_15px_rgba(0,0,0,0.15)] z-[100] border-t border-slate-700">
         <div class="max-w-md mx-auto flex justify-between items-center p-4">
             <div class="flex items-center overflow-hidden">
@@ -70,20 +51,16 @@
         </div>
     </div>
 	
-	
-<!-- Area Utama Aplikasi (Tidak akan ikut tercetak) -->
-    <div class="no-print">
+<!-- Area Utama Aplikasi (Tidak akan ikut tercetak berkat class print:hidden) -->
+    <div class="print:hidden">
         <header class="bg-emerald-500 text-white p-5 shadow-md rounded-b-3xl mb-6 lg:mb-8">
             <h1 class="text-2xl font-bold text-center"><i class="fa-solid fa-wallet mr-2"></i>PengeluaranKu</h1>
         </header>
 
-        <!-- PERUBAHAN: max-w-md diubah jadi max-w-5xl agar lebar di laptop -->
         <main class="container mx-auto px-4 max-w-5xl">
-            
-            <!-- PERUBAHAN: Gunakan Grid (1 kolom di HP, 2 kolom di Desktop) -->
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
                 
-                <!-- KOLOM KIRI (Lebar 5 dari 12 di Laptop) - Berisi Total & Form -->
+                <!-- KOLOM KIRI - Berisi Total & Form -->
                 <div class="lg:col-span-5 space-y-6">
                     
                     <!-- KOTAK TOTAL -->
@@ -121,10 +98,9 @@
                                 <input type="text" inputmode="numeric" id="jumlah" placeholder="Contoh: 50.000" required class="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none">
                             </div>
                            <div>
-    <label class="block text-sm font-medium text-gray-600 mb-1">Keterangan (Opsional)</label>
-    <!-- Atribut 'required' dihapus di sini -->
-    <input type="text" id="keterangan" placeholder="Beli makan siang..." class="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none">
-</div>
+                                <label class="block text-sm font-medium text-gray-600 mb-1">Keterangan (Opsional)</label>
+                                <input type="text" id="keterangan" placeholder="Beli makan siang..." class="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                            </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-600 mb-1">Unggah Nota (Opsional)</label>
                                 <div class="relative border-2 border-dashed border-gray-300 rounded-xl h-48 text-center hover:bg-gray-50 transition overflow-hidden flex items-center justify-center bg-gray-50 group">
@@ -136,19 +112,25 @@
                                     <img id="imagePreview" src="" class="absolute inset-0 w-full h-full object-cover hidden z-10 pointer-events-none" alt="Preview Nota">
                                 </div>
                             </div>
-                            <button type="submit" id="submitBtn" class="w-full bg-emerald-500 text-white font-bold py-3 px-4 rounded-xl hover:bg-emerald-600 transition shadow-lg shadow-emerald-200 mt-4 flex justify-center items-center">
-                                <i class="fa-solid fa-paper-plane mr-2"></i> Simpan Data
-                            </button>
+                            
+                            <!-- Tombol Form (Batal & Simpan) -->
+                            <div class="flex gap-3 mt-4">
+                                <button type="reset" id="resetBtn" class="w-1/3 bg-gray-100 text-gray-600 font-bold py-3 px-2 rounded-xl hover:bg-gray-200 transition flex justify-center items-center">
+                                    <i class="fa-solid fa-arrow-rotate-left mr-1"></i> Batal
+                                </button>
+                                <button type="submit" id="submitBtn" class="w-2/3 bg-emerald-500 text-white font-bold py-3 px-4 rounded-xl hover:bg-emerald-600 transition shadow-lg shadow-emerald-200 flex justify-center items-center">
+                                    <i class="fa-solid fa-paper-plane mr-2"></i> Simpan
+                                </button>
+                            </div>
                         </form>
                     </div>
 
                 </div>
 
-                <!-- KOLOM KANAN (Lebar 7 dari 12 di Laptop) - Berisi Riwayat -->
+                <!-- KOLOM KANAN - Berisi Riwayat -->
                 <div class="lg:col-span-7">
                     <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 h-full">
                         
-                        <!-- PERUBAHAN: Menambahkan tombol Kosongkan Data sejajar dengan judul -->
                         <div class="flex justify-between items-center mb-4">
                             <h2 class="text-lg font-semibold text-gray-700">Riwayat Pengeluaran</h2>
                             <button type="button" onclick="resetAllData()" class="bg-red-50 text-red-600 font-semibold px-3 py-1.5 rounded-lg text-xs hover:bg-red-100 transition border border-red-100 flex items-center">
@@ -174,19 +156,18 @@
                     </div>
                 </div>
 
+            </div>
+        </main>
+    </div>
 
-
-
-<!-- Area Khusus Cetak Laporan -->
-    <div id="printArea" class="hidden print-only p-8 text-gray-800 bg-white w-full h-full font-sans">
+<!-- Area Khusus Cetak Laporan (Hanya muncul saat diprint) -->
+    <div id="printArea" class="hidden print:block p-8 text-gray-800 bg-white font-sans w-full">
         
-        <!-- Kop Laporan Modern -->
         <div class="border-b-2 border-emerald-500 pb-4 mb-6">
             <h1 class="text-3xl font-bold text-gray-900 uppercase tracking-wider">Rekapitulasi Pengeluaran</h1>
             <p class="text-gray-500 mt-1" id="printDate"></p>
         </div>
         
-        <!-- Tabel Modern -->
         <table class="w-full text-sm text-left border-collapse">
             <thead>
                 <tr class="border-b-2 border-gray-800 text-gray-600 uppercase text-xs tracking-wider">

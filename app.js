@@ -48,7 +48,7 @@ document.getElementById('kategori').addEventListener('change', function() {
     }
 });
 
-// PERBAIKAN: Logika pemformatan ribuan dipindah ke SINI (di luar fungsi submit)
+// Logika pemformatan ribuan saat input jumlah
 document.getElementById('jumlah').addEventListener('input', function(e) {
     let rawValue = this.value.replace(/[^0-9]/g, '');
     if (rawValue) {
@@ -56,6 +56,15 @@ document.getElementById('jumlah').addEventListener('input', function(e) {
     } else {
         this.value = '';
     }
+});
+
+// Event listener khusus saat tombol Reset/Batal ditekan pada form
+document.getElementById('expenseForm').addEventListener('reset', function() {
+    resetPreview();
+    const inputManual = document.getElementById('kategoriManual');
+    inputManual.classList.add('hidden');
+    inputManual.required = false;
+    inputManual.value = ''; 
 });
 
 function getBase64(file) {
@@ -95,7 +104,7 @@ async function fetchTotal() {
 
 document.addEventListener('DOMContentLoaded', fetchTotal);
 
-// FUNGSI CETAK LAPORAN
+// FUNGSI CETAK LAPORAN (Dengan Jeda agar tidak blank)
 document.getElementById('btnCetak').addEventListener('click', () => {
     if (appData.length === 0) {
         Swal.fire('Belum Ada Data', 'Tunggu data selesai dimuat atau isi pengeluaran terlebih dahulu.', 'warning');
@@ -116,22 +125,25 @@ document.getElementById('btnCetak').addEventListener('click', () => {
         } catch(e) {}
 
         const tr = document.createElement('tr');
-        tr.className = "border-b border-gray-200 hover:bg-gray-50"; 
+        tr.className = "border-b border-gray-200 text-black"; 
         
         tr.innerHTML = `
-            <td class="py-4 px-2 text-center text-gray-500">${index + 1}</td>
-            <td class="py-4 px-2">${tglStr}</td>
-            <td class="py-4 px-2 font-medium">${item.kategori}</td>
-            <td class="py-4 px-2 text-gray-600">${item.keterangan}</td>
+            <td class="py-4 px-2 text-center text-gray-800">${index + 1}</td>
+            <td class="py-4 px-2 text-gray-800">${tglStr}</td>
+            <td class="py-4 px-2 font-medium text-gray-900">${item.kategori}</td>
+            <td class="py-4 px-2 text-gray-800">${item.keterangan}</td>
             <td class="py-4 px-2 text-right font-semibold text-gray-900">${formatRupiah(item.jumlah)}</td>
         `;
         tbody.appendChild(tr);
     });
 
     document.getElementById('tableTotal').innerText = formatRupiah(totalSaldo);
-    window.print();
+    
+    // Memberikan waktu browser merender tabel ke layar sebelum membuka print preview
+    setTimeout(() => {
+        window.print();
+    }, 500);
 });
-
 
 // Handle Form Submit 
 document.getElementById('expenseForm').addEventListener('submit', async function(e) {
@@ -172,10 +184,7 @@ document.getElementById('expenseForm').addEventListener('submit', async function
         
       if(result.status === 'success') {
             Swal.fire({ icon: 'success', title: 'Berhasil!', text: 'Dicatat.', confirmButtonColor: '#10b981' });
-            document.getElementById('expenseForm').reset();
-            
-            // Panggil fungsi reset gambar agar preview hilang dan kembali jadi awan
-            resetPreview(); 
+            document.getElementById('expenseForm').reset(); // Ini juga memicu event 'reset' di atas
             
             document.getElementById('totalPengeluaran').innerHTML = '<i class="fa-solid fa-spinner fa-spin text-xl"></i>';
             fetchTotal(); 
@@ -185,7 +194,7 @@ document.getElementById('expenseForm').addEventListener('submit', async function
     } catch (error) {
         Swal.fire({ icon: 'error', title: 'Gagal Menyimpan', text: error.message, confirmButtonColor: '#10b981' });
     } finally {
-        submitBtn.innerHTML = '<i class="fa-solid fa-paper-plane mr-2"></i> Simpan Data';
+        submitBtn.innerHTML = '<i class="fa-solid fa-paper-plane mr-2"></i> Simpan';
         submitBtn.disabled = false;
     }
 });
@@ -198,49 +207,34 @@ const pwaBanner = document.getElementById('pwaBanner');
 const btnInstall = document.getElementById('btnInstall');
 const btnCloseBanner = document.getElementById('btnCloseBanner');
 
-// Dengarkan event dari browser jika PWA siap diinstal
 window.addEventListener('beforeinstallprompt', (e) => {
-    // Mencegah browser menampilkan prompt default bawah layar (mini-infobar)
     e.preventDefault();
-    
-    // Simpan event untuk dipanggil nanti saat tombol diklik
     deferredPrompt = e;
-    
-    // Tampilkan banner custom kita (ubah dari hidden menjadi flex)
     pwaBanner.classList.remove('hidden');
     pwaBanner.classList.add('flex');
 });
 
-// Aksi saat tombol "Instal" diklik
 btnInstall.addEventListener('click', async () => {
-    // Sembunyikan banner
     pwaBanner.classList.add('hidden');
     pwaBanner.classList.remove('flex');
     
     if (deferredPrompt) {
-        // Munculkan prompt instalasi bawaan sistem/browser
         deferredPrompt.prompt();
-        
-        // Tunggu respon pengguna (apakah mereka setuju menginstal?)
         const { outcome } = await deferredPrompt.userChoice;
         if (outcome === 'accepted') {
             console.log('Pengguna setuju menginstal PWA');
         } else {
             console.log('Pengguna batal menginstal PWA');
         }
-        
-        // Event hanya bisa dipakai sekali, lalu kosongkan
         deferredPrompt = null;
     }
 });
 
-// Aksi saat tombol "X" (Tutup) diklik
 btnCloseBanner.addEventListener('click', () => {
     pwaBanner.classList.add('hidden');
     pwaBanner.classList.remove('flex');
 });
 
-// Aksi jika aplikasi berhasil terinstal (misal diinstal dari menu browser)
 window.addEventListener('appinstalled', () => {
     pwaBanner.classList.add('hidden');
     pwaBanner.classList.remove('flex');
@@ -253,25 +247,26 @@ function renderRiwayat() {
     const tbody = document.getElementById('riwayatBody');
     tbody.innerHTML = '';
     
-    // Loop dari belakang agar data terbaru tampil di atas
     for (let i = appData.length - 1; i >= 0; i--) {
         const item = appData[i];
         
-        // Format tanggal untuk tampilan
         let tglStr = item.tanggal;
         let tglRaw = '';
         try { 
             let d = new Date(item.tanggal);
             if (!isNaN(d.getTime())) { 
                 tglStr = d.toLocaleDateString('id-ID', {day: 'numeric', month: 'short'});
-                tglRaw = d.toISOString().split('T')[0]; // Format YYYY-MM-DD untuk form edit
+                tglRaw = d.toISOString().split('T')[0]; 
             }
         } catch(e) {}
+
+        // PERBAIKAN: Memastikan kategori dan keterangan selalu dibaca sebagai String (Teks)
+        let safeKategori = String(item.kategori || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+        let safeKeterangan = String(item.keterangan || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
 
         const tr = document.createElement('tr');
         tr.className = "border-b border-gray-50 hover:bg-gray-50"; 
         
-// Tombol Edit & Hapus diletakkan bersebelahan menggunakan flex
         tr.innerHTML = `
             <td class="py-3 pr-2 text-xs">${tglStr}</td>
             <td class="py-3 px-2">
@@ -280,7 +275,7 @@ function renderRiwayat() {
             </td>
             <td class="py-3 px-2 text-right font-medium">${formatRupiah(item.jumlah)}</td>
             <td class="py-3 pl-2 text-center flex justify-center gap-2">
-              <button onclick="editData(${item.row}, '${tglRaw}', '${item.kategori.replace(/'/g, "\\'").replace(/"/g, '&quot;')}', '${item.keterangan.replace(/'/g, "\\'").replace(/"/g, '&quot;')}', ${item.jumlah})" class="bg-blue-100 text-blue-600 p-2 rounded-lg hover:bg-blue-200 transition" title="Edit">
+              <button onclick="editData(${item.row}, '${tglRaw}', '${safeKategori}', '${safeKeterangan}', ${item.jumlah})" class="bg-blue-100 text-blue-600 p-2 rounded-lg hover:bg-blue-200 transition" title="Edit">
                     <i class="fa-solid fa-pen-to-square"></i>
                 </button>
                 <button onclick="deleteData(${item.row})" class="bg-red-100 text-red-600 p-2 rounded-lg hover:bg-red-200 transition" title="Hapus">
@@ -294,7 +289,6 @@ function renderRiwayat() {
 
 // Fungsi memunculkan form edit dan mengirim pembaruan ke Database
 async function editData(row, tanggal, kategori, keterangan, jumlah) {
-    // Format nominal awal agar saat popup dibuka, angkanya sudah bertitik
     let formattedJumlah = parseInt(jumlah, 10).toLocaleString('id-ID');
 
     const { value: formValues } = await Swal.fire({
@@ -315,7 +309,6 @@ async function editData(row, tanggal, kategori, keterangan, jumlah) {
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-600 mb-1">Jumlah (Rp)</label>
-                    <!-- Menggunakan type text dan inputmode numeric agar titik bisa dimunculkan -->
                     <input id="edit-jml" type="text" inputmode="numeric" class="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none" value="${formattedJumlah}">
                 </div>
             </div>
@@ -327,14 +320,11 @@ async function editData(row, tanggal, kategori, keterangan, jumlah) {
         confirmButtonText: 'Simpan Perubahan',
         cancelButtonText: 'Batal',
         
-        // Menambahkan fungsi pendeteksi ketikan di dalam popup
         didOpen: () => {
             const editJml = document.getElementById('edit-jml');
             editJml.addEventListener('input', function(e) {
-                // Hapus semua karakter selain angka
                 let rawValue = this.value.replace(/[^0-9]/g, '');
                 if (rawValue) {
-                    // Format kembali menjadi angka dengan titik
                     this.value = parseInt(rawValue, 10).toLocaleString('id-ID');
                 } else {
                     this.value = '';
@@ -343,7 +333,6 @@ async function editData(row, tanggal, kategori, keterangan, jumlah) {
         },
         
         preConfirm: () => {
-            // Hilangkan titik sebelum dikirim ke database
             let bersihJml = document.getElementById('edit-jml').value.replace(/[^0-9]/g, '');
             return {
                 action: 'edit',
@@ -351,7 +340,7 @@ async function editData(row, tanggal, kategori, keterangan, jumlah) {
                 tanggal: document.getElementById('edit-tgl').value,
                 kategori: document.getElementById('edit-kat').value,
                 keterangan: document.getElementById('edit-ket').value,
-                jumlah: bersihJml // Mengirim angka murni tanpa titik
+                jumlah: bersihJml 
             }
         }
     });
@@ -365,7 +354,6 @@ async function editData(row, tanggal, kategori, keterangan, jumlah) {
             
             if(result.status === 'success') {
                 Swal.fire('Berhasil!', 'Data telah diperbarui.', 'success');
-                // Refresh data layar tanpa me-reload web
                 fetchTotal(); 
             } else {
                 throw new Error(result.message);
@@ -401,7 +389,6 @@ async function deleteData(row) {
             
             if(resData.status === 'success') {
                 Swal.fire('Terhapus!', 'Data pengeluaran berhasil dihapus.', 'success');
-                // Tarik ulang data agar tabel dan total saldo langsung ter-update
                 fetchTotal(); 
             } else {
                 throw new Error(resData.message);
@@ -411,7 +398,6 @@ async function deleteData(row) {
         }
     }
 }
-
 
 // Fungsi untuk MENGOSONGKAN SELURUH DATA dengan konfirmasi SweetAlert
 async function resetAllData() {
@@ -438,7 +424,6 @@ async function resetAllData() {
             
             if(resData.status === 'success') {
                 Swal.fire('Dikosongkan!', 'Semua data pengeluaran telah berhasil dihapus.', 'success');
-                // Tarik ulang data agar tabel kosong dan total saldo menjadi Rp 0
                 document.getElementById('totalPengeluaran').innerHTML = '<i class="fa-solid fa-spinner fa-spin text-xl"></i>';
                 fetchTotal(); 
             } else {
